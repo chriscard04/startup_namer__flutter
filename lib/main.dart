@@ -12,8 +12,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Startup Name Generator',
+    return MaterialApp(
+      title: 'Devris 1.1',
+      theme: ThemeData(
+        primaryColor: Colors.deepOrange,
+      ),
       home: RandomWords(),
     );
   }
@@ -28,13 +31,56 @@ class RandomWords extends StatefulWidget {
 
 class _RandomWordsState extends State<RandomWords> {
   final _suggestions = <WordPair>[];
+  final _saved = <WordPair>{};
   final _biggerFont = const TextStyle(fontSize: 18.0);
+
+  @override
+  Widget build(BuildContext context) {
+    // final wordPair = WordPair.random();
+    // return Text(wordPair.asPascalCase);
+    return Scaffold(
+      appBar: AppBar(title: const Text("Name's List Generator"), actions: [
+        IconButton(icon: const Icon(Icons.list), onPressed: _pushSaved)
+      ]),
+      body: _buildSuggestions(),
+    );
+  }
+
+  void _pushSaved() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) {
+          final tiles = _saved.map(
+            (WordPair pair) {
+              return ListTile(
+                title: Text(
+                  pair.asPascalCase,
+                  style: _biggerFont,
+                ),
+              );
+            },
+          );
+
+          final divided = tiles.isNotEmpty
+              ? ListTile.divideTiles(context: context, tiles: tiles).toList()
+              : <Widget>[];
+
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Saved Suggestions'),
+            ),
+            body: ListView(children: divided),
+          );
+        },
+      ),
+    );
+  }
 
   _buildSuggestions() {
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemBuilder: /*1*/ (context, i) {
-          if (i.isOdd) return const Divider();
+          if (i.isOdd) return const Divider(color: Colors.lightBlue);
           /*2*/
           final index = i ~/ 2; /*3*/
           if (index >= _suggestions.length) {
@@ -46,23 +92,31 @@ class _RandomWordsState extends State<RandomWords> {
   }
 
   Widget _buildRow(WordPair pair) {
+    final alreadySaved = _saved.contains(pair);
+
     return ListTile(
       title: Text(
         pair.asPascalCase,
         style: _biggerFont,
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // final wordPair = WordPair.random();
-    // return Text(wordPair.asPascalCase);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Name Generator'),
-      ),
-      body: _buildSuggestions(),
+      trailing: IconButton(
+          icon: Icon(
+            alreadySaved
+                ? Icons.bookmark_rounded
+                : Icons.bookmark_border_rounded,
+            color: Colors.lightBlue,
+          ),
+          iconSize: 28,
+          onPressed: () {
+            setState(() {
+              if (alreadySaved) {
+                _saved.remove(pair);
+              } else {
+                _saved.add(pair);
+              }
+            });
+          }),
+      subtitle: Text(alreadySaved ? 'Added to favorites' : 'Wanna save it?'),
     );
   }
 }
